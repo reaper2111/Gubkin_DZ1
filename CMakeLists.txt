@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.16)
+project(MaxFlowRace LANGUAGES CXX)
+
+add_executable(max_flow_race main.cpp)
+target_compile_features(max_flow_race PRIVATE cxx_std_17)
+if(MSVC)
+    target_compile_options(max_flow_race PRIVATE /W4 /EHsc)
+else()
+    target_compile_options(max_flow_race PRIVATE -Wall -Wextra -Wpedantic)
+endif()

@@ -1,1 +1,0 @@
-# Gubkin_DZ1
