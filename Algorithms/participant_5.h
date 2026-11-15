@@ -5,21 +5,10 @@
 #include <limits>
 #include <algorithm>
 
-// Участник 5: Артём Бабичев — алгоритм Диница (Dinic, 1970).
-//
-// Идея:
-//   1. BFS из истока по остаточной сети строит "слоистую сеть":
-//      level[v] = длина кратчайшего пути (в рёбрах) от истока до v.
-//   2. Если сток недостижим — поток максимален, конец.
-//   3. DFS (нерекурсивный) ищет "блокирующий поток": пускаем поток только по рёбрам
-//      u -> v с level[v] == level[u] + 1. Массив it[] запоминает, какое
-//      ребро вершины проверять следующим, чтобы не перебирать заново
-//      уже "мёртвые" рёбра.
-//   4. Повторяем с шага 1.
-//
-// Сложность: O(V^2 * E) в общем случае, O(E * sqrt(V)) на единичных сетях.
+// Алгоритм Диница: BFS строит слоистую сеть, DFS ищет в ней блокирующий поток.
+// Повторяем, пока сток достижим из истока.
 
-namespace dinic_detail {
+namespace participant_5_detail {
 
 struct ResidualEdge {
     int to;
@@ -115,10 +104,10 @@ private:
     std::vector<int> path_;  // id рёбер текущего пути
 };
 
-}  // namespace dinic_detail
+}  // namespace participant_5_detail
 
 inline long long participant_5(const Graph& graph, int source, int sink) {
-    dinic_detail::Dinic d(graph.n);
+    participant_5_detail::Dinic d(graph.n);
     for (const Edge& e : graph.edges)
         d.AddEdge(e.from, e.to, e.capacity);
     return d.MaxFlow(source, sink);
