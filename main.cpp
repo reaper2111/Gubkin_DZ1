@@ -41,11 +41,11 @@ int main()
     {
         auto& ds = dataSets.top();
 
-        // RUN(participant_1);
+        RUN(participant_1);
         // RUN(participant_2);
-        // RUN(participant_3);
+        RUN(participant_3);
         // RUN(participant_4);
-
+        RUN(participant_5);
         (void)ds;
         dataSets.pop();
     }
