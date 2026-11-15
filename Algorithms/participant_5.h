@@ -11,7 +11,7 @@
 //   1. BFS из истока по остаточной сети строит "слоистую сеть":
 //      level[v] = длина кратчайшего пути (в рёбрах) от истока до v.
 //   2. Если сток недостижим — поток максимален, конец.
-//   3. DFS ищет "блокирующий поток": пускаем поток только по рёбрам
+//   3. DFS (нерекурсивный) ищет "блокирующий поток": пускаем поток только по рёбрам
 //      u -> v с level[v] == level[u] + 1. Массив it[] запоминает, какое
 //      ребро вершины проверять следующим, чтобы не перебирать заново
 //      уже "мёртвые" рёбра.
@@ -43,7 +43,7 @@ public:
         long long flow = 0;
         while (Bfs(s, t)) {
             std::fill(it_.begin(), it_.end(), 0);
-            while (long long pushed = Dfs(s, t, std::numeric_limits<long long>::max()))
+            while (long long pushed = Dfs(s, t))
                 flow += pushed;
         }
         return flow;
@@ -70,28 +70,49 @@ private:
         return level_[t] != -1;
     }
 
-    // Проталкиваем поток не больше limit из u в t по слоистой сети.
-    long long Dfs(int u, int t, long long limit) {
-        if (u == t) return limit;
-        for (int& i = it_[u]; i < static_cast<int>(adj_[u].size()); ++i) {
-            int id = adj_[u][i];
-            ResidualEdge& e = edges_[id];
-            if (e.cap > 0 && level_[e.to] == level_[u] + 1) {
-                long long pushed = Dfs(e.to, t, std::min(limit, e.cap));
-                if (pushed > 0) {
-                    e.cap -= pushed;
+    // Ищем один путь s -> t в слоистой сети и пускаем по нему поток.
+    // Обход без рекурсии (свой стек path_), чтобы на длинных путях
+    // не переполнялся стек вызовов. Возвращает 0, если пути больше нет.
+    long long Dfs(int s, int t) {
+        path_.clear();
+        int u = s;
+        while (true) {
+            if (u == t) {
+                long long pushed = std::numeric_limits<long long>::max();
+                for (int id : path_)
+                    pushed = std::min(pushed, edges_[id].cap);
+                for (int id : path_) {
+                    edges_[id].cap -= pushed;
                     edges_[id ^ 1].cap += pushed;
-                    return pushed;
+                }
+                return pushed;
+            }
+            bool advanced = false;
+            for (int& i = it_[u]; i < static_cast<int>(adj_[u].size()); ++i) {
+                int id = adj_[u][i];
+                const ResidualEdge& e = edges_[id];
+                if (e.cap > 0 && level_[e.to] == level_[u] + 1) {
+                    path_.push_back(id);
+                    u = e.to;
+                    advanced = true;
+                    break;
                 }
             }
+            if (advanced) continue;
+            // тупик: из u до стока не дойти
+            if (u == s) return 0;
+            int id = path_.back();
+            path_.pop_back();
+            u = edges_[id ^ 1].to;   // возвращаемся в предыдущую вершину
+            ++it_[u];                // и больше это ребро не пробуем
         }
-        return 0;  // из u больше ничего не протолкнуть
     }
 
     std::vector<ResidualEdge> edges_;
     std::vector<std::vector<int>> adj_;
     std::vector<int> level_;
     std::vector<int> it_;
+    std::vector<int> path_;  // id рёбер текущего пути
 };
 
 }  // namespace dinic_detail
